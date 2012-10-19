@@ -22,8 +22,8 @@ int main()
 {
     int fd = socket(PF_INET, SOCK_STREAM, 0);
     int cli_fd = 0;
-    struct sockaddr cli_addr;
-    socklen_t cli_len;
+    struct sockaddr_in cli_addr;
+    socklen_t cli_len = sizeof(struct sockaddr_in);
     struct sockaddr_in sa;
 
     if(-1 == fd) {
@@ -31,6 +31,7 @@ int main()
         return 1;
     }
     memset(&sa, 0, sizeof(struct sockaddr_in));
+    memset(&cli_addr, 0, sizeof(struct sockaddr_in));
     sa.sin_port = htons(LISTEN_PORT);
     sa.sin_addr = (struct in_addr) {0};
     if(-1 == bind(fd, (struct sockaddr*)&sa, sizeof(struct sockaddr_in))) {
@@ -41,8 +42,10 @@ int main()
         fprintf(stderr, "Listen Error: %s\n", strerror(errno));
         return 1;
     }
-    while(-1 != (cli_fd = accept(fd, &cli_addr, &cli_len)))
+    while(-1 != (cli_fd = accept(fd, (struct sockaddr*)&cli_addr, &cli_len)))
     {
+        fprintf(stderr, "Received a connection from %s:%hu\n",
+                inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
         if(-1 == echo(cli_fd)) {
             fprintf(stderr, "Echo Error\n");
             return -1;
